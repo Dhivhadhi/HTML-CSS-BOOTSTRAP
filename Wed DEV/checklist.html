@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Task Checklist (Dark Mode 😎)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: url('https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=1350&q=80') no-repeat center center fixed;
+      background-size: cover;
+      color: #f1f1f1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      background: rgba(30, 30, 30, 0.9);
+      padding: 25px 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 400px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #ffffff;
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    nav a {
+      color: #03dac6;
+      text-decoration: none;
+      font-weight: bold;
+      margin: 5px;
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    input[type="checkbox"] {
+      margin-right: 10px;
+      transform: scale(1.3);
+    }
+
+    input[type="range"] {
+      width: 100%;
+    }
+
+    .slider-value {
+      text-align: right;
+      font-size: 14px;
+      margin-top: -10px;
+      margin-bottom: 15px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #03dac6;
+      color: #000;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #00bca5;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .progress-container {
+      margin-top: 20px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      background-color: #333;
+      border-radius: 10px;
+      overflow: hidden;
+      height: 20px;
+      margin-bottom: 5px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background-color: #03dac6;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      text-align: right;
+      font-size: 14px;
+    }
+
+    select {
+      width: 100%;
+      margin-top: 8px;
+      padding: 6px;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    @media (max-width: 400px) {
+      .container {
+        padding: 20px 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Daily Task View -->
+  <div class="container" id="dailyTasks">
+    <nav>
+      <a href="#">Home</a>
+      <a href="#">About</a>
+      <a href="#">Profile</a>
+      <a href="#">Account</a>
+      <a href="#">Version</a>
+    </nav>
+    <h2>📆 Daily Tasks</h2>
+    <form id="taskForm">
+      <label><input type="checkbox" id="Editing"> Editing</label>
+      <label><input type="checkbox" id="YT"> YT</label>
+      <label><input type="checkbox" id="Workout"> Workout</label>
+      <label><input type="checkbox" id="Coding"> Coding</label>
+      <label><input type="checkbox" id="Research"> Research</label>
+      <button type="button" onclick="saveTasks()">✅ Save</button>
+      <button type="button" onclick="showStatus()">📊 View Status</button>
+    </form>
+  </div>
+
+  <!-- Status View -->
+  <div class="container hidden" id="statusView">
+    <h2>📊 Task Progress</h2>
+    <div id="slidersContainer"></div>
+
+    <div class="progress-container">
+      <div class="progress-bar">
+        <div class="progress-bar-fill" id="totalProgressFill"></div>
+      </div>
+      <div class="progress-text" id="totalProgressText">0%</div>
+    </div>
+
+    <button type="button" onclick="goBack()">🔙 Back to Tasks</button>
+  </div>
+
+  <script>
+    const taskIds = ['Editing', 'YT', 'Workout', 'Coding', 'Research'];
+
+    window.onload = () => {
+      taskIds.forEach(id => {
+        const state = localStorage.getItem(id);
+        if (state === 'true') document.getElementById(id).checked = true;
+      });
+    };
+
+    function saveTasks() {
+      taskIds.forEach(id => {
+        const isChecked = document.getElementById(id).checked;
+        localStorage.setItem(id, isChecked);
+      });
+      alert("✅ Your tasks have been saved!");
+    }
+
+    function showStatus() {
+      document.getElementById("dailyTasks").classList.add("hidden");
+      document.getElementById("statusView").classList.remove("hidden");
+      const container = document.getElementById("slidersContainer");
+      container.innerHTML = "";
+
+      taskIds.forEach(id => {
+        const percentage = localStorage.getItem(id + "_percent") || 0;
+
+        const sliderDiv = document.createElement("div");
+        const label = document.createElement("label");
+        label.textContent = id;
+
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.min = 0;
+        slider.max = 100;
+        slider.value = percentage;
+        slider.id = id + "_slider";
+        slider.oninput = () => {
+          document.getElementById(id + "_value").textContent = slider.value + "%";
+          localStorage.setItem(id + "_percent", slider.value);
+          updateTotalProgress();
+        };
+
+        const valueDiv = document.createElement("div");
+        valueDiv.className = "slider-value";
+        valueDiv.id = id + "_value";
+        valueDiv.textContent = percentage + "%";
+
+        const select = document.createElement("select");
+        const categories = ["", "Beginner", "Intermediate", "Advanced", "Project", "Reference"];
+        categories.forEach(cat => {
+          const opt = document.createElement("option");
+          opt.value = cat;
+          opt.textContent = cat === "" ? "Select Category" : cat;
+          select.appendChild(opt);
+        });
+
+        sliderDiv.appendChild(label);
+        sliderDiv.appendChild(slider);
+        sliderDiv.appendChild(valueDiv);
+        sliderDiv.appendChild(select);
+
+        container.appendChild(sliderDiv);
+      });
+
+      updateTotalProgress();
+    }
+
+    function goBack() {
+      document.getElementById("statusView").classList.add("hidden");
+      document.getElementById("dailyTasks").classList.remove("hidden");
+    }
+
+    function updateTotalProgress() {
+      let total = 0;
+      taskIds.forEach(id => {
+        const val = parseInt(document.getElementById(id + "_slider").value);
+        total += val;
+      });
+      const average = Math.round(total / taskIds.length);
+      document.getElementById("totalProgressFill").style.width = average + "%";
+      document.getElementById("totalProgressText").textContent = average + "%";
+    }
+  </script>
+</body>
+</html>
